@@ -1370,13 +1370,13 @@ void main() {
                     divisions: divisions,
                     onChanged: onChanged,
                   ),
-                  RaisedButton(
+                  ElevatedButton(
                     child: const Text('Next'),
                     onPressed: () {
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
                           builder: (BuildContext context) {
-                            return RaisedButton(
+                            return ElevatedButton(
                               child: const Text('Inner page'),
                               onPressed: () { Navigator.of(context).pop(); },
                             );
@@ -1660,6 +1660,143 @@ void main() {
     );
 
     await gesture.up();
+  });
+
+  testWidgets('Range Slider thumb gets stroked when overlapping', (WidgetTester tester) async {
+    RangeValues values = const RangeValues(0.3, 0.7);
+
+    final ThemeData theme = ThemeData(
+      platform: TargetPlatform.android,
+      primarySwatch: Colors.blue,
+      sliderTheme: const SliderThemeData(
+        valueIndicatorColor: Color(0xff000001),
+        showValueIndicator: ShowValueIndicator.onlyForContinuous,
+      ),
+    );
+    final SliderThemeData sliderTheme = theme.sliderTheme;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Directionality(
+          textDirection: TextDirection.ltr,
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Material(
+                child: Center(
+                  child: Theme(
+                    data: theme,
+                    child: RangeSlider(
+                      values: values,
+                      labels: RangeLabels(values.start.toStringAsFixed(2), values.end.toStringAsFixed(2)),
+                      onChanged: (RangeValues newValues) {
+                        setState(() {
+                          values = newValues;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    // Get the bounds of the track by finding the slider edges and translating
+    // inwards by the overlay radius.
+    final Offset topLeft = tester.getTopLeft(find.byType(RangeSlider)).translate(24, 0);
+    final Offset bottomRight = tester.getBottomRight(find.byType(RangeSlider)).translate(-24, 0);
+    final Offset middle = topLeft + bottomRight / 2;
+
+    // Drag the thumbs towards the center.
+    final Offset leftTarget = topLeft + (bottomRight - topLeft) * 0.3;
+    await tester.dragFrom(leftTarget, middle - leftTarget);
+    await tester.pumpAndSettle();
+    final Offset rightTarget = topLeft + (bottomRight - topLeft) * 0.7;
+    await tester.dragFrom(rightTarget, middle - rightTarget);
+    await tester.pumpAndSettle();
+    expect(values.start, closeTo(0.5, 0.03));
+    expect(values.end, closeTo(0.5, 0.03));
+    final TestGesture gesture = await tester.startGesture(middle);
+    await tester.pumpAndSettle();
+
+    /// The first circle is the thumb, the second one is the overlapping shape
+    /// circle, and the last one is the second thumb.
+    expect(
+        find.byType(RangeSlider),
+        paints
+          ..circle()
+          ..circle(color: sliderTheme.overlappingShapeStrokeColor)
+          ..circle()
+    );
+
+    await gesture.up();
+
+    expect(
+        find.byType(RangeSlider),
+        paints
+          ..circle()
+          ..circle(color: sliderTheme.overlappingShapeStrokeColor)
+          ..circle()
+    );
+  });
+
+  testWidgets('Range Slider Semantics', (WidgetTester tester) async {
+    await tester.pumpWidget(
+        MaterialApp(
+          home: Theme(
+            data: ThemeData.light(),
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: MediaQuery(
+                data: MediaQueryData.fromWindow(window),
+                child: Material(
+                  child: RangeSlider(
+                    values: const RangeValues(10.0, 12.0),
+                    min: 0.0,
+                    max: 100.0,
+                    onChanged: (RangeValues v) { },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        )
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSemantics(find.byType(RangeSlider)),
+      matchesSemantics(
+        scopesRoute: true,
+        children:<Matcher>[
+          matchesSemantics(
+            children:  <Matcher>[
+              matchesSemantics(
+                isEnabled: true,
+                hasEnabledState: true,
+                hasIncreaseAction: true,
+                hasDecreaseAction: true,
+                value: '10%',
+                increasedValue: '10%',
+                decreasedValue: '5%',
+              ),
+              matchesSemantics(
+                isEnabled: true,
+                hasEnabledState: true,
+                hasIncreaseAction: true,
+                hasDecreaseAction: true,
+                value: '12%',
+                increasedValue: '17%',
+                decreasedValue: '12%',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   });
 
   testWidgets('Range Slider implements debugFillProperties', (WidgetTester tester) async {

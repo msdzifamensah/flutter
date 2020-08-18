@@ -1647,21 +1647,19 @@ void main() {
                       TestSemantics(
                         children: <TestSemantics>[
                           TestSemantics(
-                            flags: <SemanticsFlag>[SemanticsFlag.hasImplicitScrolling],
                             children: <TestSemantics>[
                               TestSemantics(
-                                children: <TestSemantics>[
-                                  TestSemantics(
-                                    label: 'Leading',
-                                    textDirection: TextDirection.ltr,
-                                  ),
-                                  TestSemantics(
-                                    label: 'Action 1',
-                                    textDirection: TextDirection.ltr,
-                                  ),
-                                ],
+                                label: 'Leading',
+                                textDirection: TextDirection.ltr,
+                              ),
+                              TestSemantics(
+                                label: 'Action 1',
+                                textDirection: TextDirection.ltr,
                               ),
                             ],
+                          ),
+                          TestSemantics(
+                            flags: <SemanticsFlag>[SemanticsFlag.hasImplicitScrolling],
                           ),
                         ],
                       ),
@@ -1731,7 +1729,7 @@ void main() {
                     floating: true,
                     snap: snap,
                     actions: <Widget>[
-                      FlatButton(
+                      TextButton(
                         child: const Text('snap=false'),
                         onPressed: () {
                           setState(() {
@@ -1878,21 +1876,12 @@ void main() {
       return MaterialApp(
         home: Builder(
           builder: (BuildContext context) {
-            final ThemeData themeData = Theme.of(context);
-            return Theme(
-              data: themeData.copyWith(
-                appBarTheme: themeData.appBarTheme.copyWith(
-                  // ignore: deprecated_member_use_from_same_package
-                  shouldCapTextScaleForTitle: true,
-                ),
-              ),
-              child: MediaQuery(
-                data: MediaQuery.of(context).copyWith(textScaleFactor: textScaleFactor),
-                child: Scaffold(
-                  appBar: AppBar(
-                    centerTitle: false,
-                    title: const Text('Jumbo', style: TextStyle(fontSize: 18)),
-                  ),
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaleFactor: textScaleFactor),
+              child: Scaffold(
+                appBar: AppBar(
+                  centerTitle: false,
+                  title: const Text('Jumbo', style: TextStyle(fontSize: 18)),
                 ),
               ),
             );
@@ -1927,18 +1916,18 @@ void main() {
           builder: (BuildContext context) {
             return Directionality(
               textDirection: textDirection,
-              child: MediaQuery(
-                data: MediaQuery.of(context).copyWith(textScaleFactor: textScaleFactor),
-                child: Builder(
-                  builder: (BuildContext context) {
-                    return Scaffold(
-                      appBar: AppBar(
-                        centerTitle: centerTitle,
-                        title: const Text('Jumbo'),
+              child: Builder(
+                builder: (BuildContext context) {
+                  return Scaffold(
+                    appBar: AppBar(
+                      centerTitle: centerTitle,
+                      title: MediaQuery(
+                        data: MediaQuery.of(context).copyWith(textScaleFactor: textScaleFactor),
+                        child: const Text('Jumbo'),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             );
           },
@@ -1984,6 +1973,41 @@ void main() {
     await tester.pumpWidget(buildFrame());
     expect(tester.getRect(appBarTitle), const Rect.fromLTRB(200, -12, 800.0 - 200.0, 68));
     expect(tester.getCenter(appBarTitle).dy, tester.getCenter(toolbar).dy);
+  });
+
+  testWidgets('SliverAppBar configures the delegate properly', (WidgetTester tester) async {
+    Future<void> buildAndVerifyDelegate({ bool pinned, bool floating, bool snap }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CustomScrollView(
+            slivers: <Widget>[
+              SliverAppBar(
+                title: const Text('Jumbo'),
+                pinned: pinned,
+                floating: floating,
+                snap: snap,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final SliverPersistentHeaderDelegate delegate = tester
+        .widget<SliverPersistentHeader>(find.byType(SliverPersistentHeader))
+        .delegate;
+
+      // Ensure we have a non-null vsync when it's needed.
+      if (!floating || (delegate.snapConfiguration == null && delegate.showOnScreenConfiguration == null))
+        expect(delegate.vsync, isNotNull);
+
+      expect(delegate.showOnScreenConfiguration != null, snap && floating);
+    }
+
+    await buildAndVerifyDelegate(pinned: false, floating: true, snap: false);
+    await buildAndVerifyDelegate(pinned: false, floating: true, snap: true);
+
+    await buildAndVerifyDelegate(pinned: true, floating: true, snap: false);
+    await buildAndVerifyDelegate(pinned: true, floating: true, snap: true);
   });
 
   testWidgets('AppBar respects toolbarHeight', (WidgetTester tester) async {
@@ -2053,5 +2077,39 @@ void main() {
       expect(error.toString(), contains('toolbarHeight != null'));
       expect(error.toString(), contains('is not true'));
     }
+  });
+
+  testWidgets('AppBar respects leadingWidth', (WidgetTester tester) async {
+    const Key key = Key('leading');
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          leading: const Placeholder(key: key),
+          leadingWidth: 100,
+          title: const Text('Title'),
+        ),
+      ),
+    ));
+
+    // By default toolbarHeight is 56.0.
+    expect(tester.getRect(find.byKey(key)), const Rect.fromLTRB(0, 0, 100, 56));
+  });
+
+  testWidgets('SliverAppBar respects leadingWidth', (WidgetTester tester) async {
+    const Key key = Key('leading');
+    await tester.pumpWidget( const MaterialApp(
+      home: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+            leading: Placeholder(key: key),
+            leadingWidth: 100,
+            title: Text('Title'),
+          ),
+        ],
+      )
+    ));
+
+    // By default toolbarHeight is 56.0.
+    expect(tester.getRect(find.byKey(key)), const Rect.fromLTRB(0, 0, 100, 56));
   });
 }

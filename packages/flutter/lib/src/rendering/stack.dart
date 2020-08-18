@@ -71,12 +71,12 @@ class RelativeRect {
 
   /// Distance from the right side of the container to the right side of this rectangle.
   ///
-  /// May be negative if the right side of the rectangle is outside of the container.
+  /// May be positive if the right side of the rectangle is outside of the container.
   final double right;
 
   /// Distance from the bottom side of the container to the bottom side of this rectangle.
   ///
-  /// May be negative if the bottom side of the rectangle is outside of the container.
+  /// May be positive if the bottom side of the rectangle is outside of the container.
   final double bottom;
 
   /// Returns whether any of the values are greater than zero.
@@ -276,13 +276,15 @@ enum StackFit {
 /// visible.
 enum Overflow {
   /// Overflowing children will be visible.
+  ///
+  /// The visible overflow area will not accept hit testing.
   visible,
 
   /// Overflowing children will be clipped to the bounds of their parent.
   clip,
 }
 
-/// Implements the stack layout algorithm
+/// Implements the stack layout algorithm.
 ///
 /// In a stack layout, the children are positioned on top of each other in the
 /// order in which they appear in the child list. First, the non-positioned

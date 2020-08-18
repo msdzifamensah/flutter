@@ -58,7 +58,7 @@ const double _monthNavButtonsWidth = 108.0;
 ///    time picker.
 ///
 class CalendarDatePicker extends StatefulWidget {
-  /// Creates a calender date picker
+  /// Creates a calender date picker.
   ///
   /// It will display a grid of days for the [initialDate]'s month. The day
   /// indicated by [initialDate] will be selected.
@@ -437,7 +437,7 @@ class _MonthPicker extends StatefulWidget {
        assert(!selectedDate.isAfter(lastDate)),
        super(key: key);
 
-  /// The initial month to display
+  /// The initial month to display.
   final DateTime initialMonth;
 
   /// The current date.
@@ -463,14 +463,14 @@ class _MonthPicker extends StatefulWidget {
   /// Called when the user picks a day.
   final ValueChanged<DateTime> onChanged;
 
-  /// Called when the user navigates to a new month
+  /// Called when the user navigates to a new month.
   final ValueChanged<DateTime> onDisplayedMonthChanged;
 
   /// Optional user supplied predicate function to customize selectable days.
   final SelectableDayPredicate selectableDayPredicate;
 
   @override
-  State<StatefulWidget> createState() => _MonthPickerState();
+  _MonthPickerState createState() => _MonthPickerState();
 }
 
 class _MonthPickerState extends State<_MonthPicker> {
@@ -668,14 +668,14 @@ class _MonthPickerState extends State<_MonthPicker> {
     });
   }
 
-  static const Map<TraversalDirection, Duration> _directionOffset = <TraversalDirection, Duration>{
-    TraversalDirection.up: Duration(days: -DateTime.daysPerWeek),
-    TraversalDirection.right: Duration(days: 1),
-    TraversalDirection.down: Duration(days: DateTime.daysPerWeek),
-    TraversalDirection.left: Duration(days: -1),
+  static const Map<TraversalDirection, int> _directionOffset = <TraversalDirection, int>{
+    TraversalDirection.up: -DateTime.daysPerWeek,
+    TraversalDirection.right: 1,
+    TraversalDirection.down: DateTime.daysPerWeek,
+    TraversalDirection.left: -1,
   };
 
-  Duration _dayDirectionOffset(TraversalDirection traversalDirection, TextDirection textDirection) {
+  int _dayDirectionOffset(TraversalDirection traversalDirection, TextDirection textDirection) {
     // Swap left and right if the text direction if RTL
     if (textDirection == TextDirection.rtl) {
       if (traversalDirection == TraversalDirection.left)
@@ -688,12 +688,12 @@ class _MonthPickerState extends State<_MonthPicker> {
 
   DateTime _nextDateInDirection(DateTime date, TraversalDirection direction) {
     final TextDirection textDirection = Directionality.of(context);
-    DateTime nextDate = date.toUtc().add(_dayDirectionOffset(direction, textDirection));
+    DateTime nextDate = utils.addDaysToDate(date, _dayDirectionOffset(direction, textDirection));
     while (!nextDate.isBefore(widget.firstDate) && !nextDate.isAfter(widget.lastDate)) {
       if (_isSelectable(nextDate)) {
         return nextDate;
       }
-      nextDate = nextDate.add(_dayDirectionOffset(direction, textDirection));
+      nextDate = utils.addDaysToDate(nextDate, _dayDirectionOffset(direction, textDirection));
     }
     return null;
   }
@@ -754,16 +754,13 @@ class _MonthPickerState extends State<_MonthPicker> {
               onFocusChange: _handleGridFocusChange,
               child: _FocusedDate(
                 date: _dayGridFocus.hasFocus ? _focusedDay : null,
-                child: Container(
-                  color: _dayGridFocus.hasFocus ? Theme.of(context).focusColor : null,
-                  child: PageView.builder(
-                    key: _pageViewKey,
-                    controller: _pageController,
-                    itemBuilder: _buildItems,
-                    itemCount: utils.monthDelta(widget.firstDate, widget.lastDate) + 1,
-                    scrollDirection: Axis.horizontal,
-                    onPageChanged: _handleMonthPageChanged,
-                  ),
+                child: PageView.builder(
+                  key: _pageViewKey,
+                  controller: _pageController,
+                  itemBuilder: _buildItems,
+                  itemCount: utils.monthDelta(widget.firstDate, widget.lastDate) + 1,
+                  scrollDirection: Axis.horizontal,
+                  onPageChanged: _handleMonthPageChanged,
                 ),
               ),
             ),

@@ -103,7 +103,7 @@ class VisualStudio {
   /// Returns the highest installed Windows 10 SDK version, or null if none is
   /// found.
   ///
-  /// For instance: 10.0.18362.0
+  /// For instance: 10.0.18362.0.
   String getWindows10SDKVersion() {
     final String sdkLocation = _getWindows10SdkLocation();
     if (sdkLocation == null) {
@@ -147,20 +147,24 @@ class VisualStudio {
     return '2019';
   }
 
-  /// The path to vcvars64.bat, or null if no Visual Studio installation has
+  /// The path to CMake, or null if no Visual Studio installation has
   /// the components necessary to build.
-  String get vcvarsPath {
+  String get cmakePath {
     final Map<String, dynamic> details = _usableVisualStudioDetails;
     if (details.isEmpty) {
       return null;
     }
-    return _fileSystem.path.join(
+    return _fileSystem.path.joinAll(<String>[
       _usableVisualStudioDetails[_installationPathKey] as String,
-      'VC',
-      'Auxiliary',
-      'Build',
-      'vcvars64.bat',
-    );
+      'Common7',
+      'IDE',
+      'CommonExtensions',
+      'Microsoft',
+      'CMake',
+      'CMake',
+      'bin',
+      'cmake.exe',
+    ]);
   }
 
   /// The major version of the Visual Studio install, as an integer.
@@ -212,6 +216,8 @@ class VisualStudio {
     return <String, String>{
       // The C++ toolchain required by the template.
       'Microsoft.VisualStudio.Component.VC.Tools.x86.x64': cppToolchainDescription,
+      // CMake
+      'Microsoft.VisualStudio.Component.VC.CMake.Project': 'C++ CMake tools for Windows',
     };
   }
 

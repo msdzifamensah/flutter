@@ -96,9 +96,8 @@ class UserMessages {
   String get androidLicensesNone => 'Android licenses not accepted.  To resolve this, run: flutter doctor --android-licenses';
   String androidLicensesUnknown(Platform platform) =>
       'Android license status unknown.\n'
-      'Try re-installing or updating your Android SDK Manager.\n'
-      'See https://developer.android.com/studio/#downloads or visit '
-      '${_androidSdkInstallUrl(platform)} for detailed instructions.';
+      'Run `flutter doctor --android-licenses` to accept the SDK licenses.\n'
+      'See ${_androidSdkInstallUrl(platform)} for more details.';
   String androidSdkManagerOutdated(String managerPath) =>
       'A newer version of the Android SDK is required. To update, run:\n'
       '$managerPath --update\n';
@@ -138,8 +137,8 @@ class UserMessages {
 
   // Messages used in XcodeValidator
   String xcodeLocation(String location) => 'Xcode at $location';
-  String xcodeOutdated(int versionMajor, int versionMinor) =>
-      'Flutter requires a minimum Xcode version of $versionMajor.$versionMinor.0.\n'
+  String xcodeOutdated(int versionMajor, int versionMinor, int versionPatch) =>
+      'Flutter requires a minimum Xcode version of $versionMajor.$versionMinor.$versionPatch.\n'
       'Download the latest version or update via the Mac App Store.';
   String get xcodeEula => "Xcode end user license agreement not signed; open Xcode or run the command 'sudo xcodebuild -license'.";
   String get xcodeMissingSimct =>
@@ -238,6 +237,8 @@ class UserMessages {
   String pkgConfigTooOld(String minimumVersion) => 'pkg-config $minimumVersion or later is required.';
   String get gtkLibrariesMissing => 'GTK 3.0 development libraries are required for Linux development.\n'
       'They are likely available from your distribution (e.g.: apt install libgtk-3-dev)';
+  String get blkidLibraryMissing => 'The blkid development library is required for Linux development.\n'
+      'It is likely available from your distribution (e.g.: apt install libblkid-dev)';
 
   // Messages used in FlutterCommand
   String flutterElapsedTime(String name, String elapsedTime) => '"flutter $name" took $elapsedTime.';
@@ -253,6 +254,9 @@ class UserMessages {
   String get flutterFoundButUnsupportedDevices => 'The following devices were found, but are not supported by this project:';
   String flutterFoundSpecifiedDevices(int count, String deviceId) =>
       'Found $count devices with name or id matching $deviceId:';
+  String get flutterMultipleDevicesFound => 'Multiple devices found:';
+  String flutterChooseDevice(int option, String name, String deviceId) => '[$option]: $name ($deviceId)';
+  String get flutterChooseOne => 'Please choose one:';
   String get flutterSpecifyDeviceWithAllOption =>
       'More than one device connected; please specify a device with '
       "the '-d <deviceId>' flag, or use '-d all' to act on all devices.";
